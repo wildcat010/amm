@@ -60,4 +60,51 @@ contract AMMPair is ERC20  {
 
         return y;
     }
+
+    function removeLiquidity(uint256 liquidity) external returns (uint256 remainingLP){
+        require(liquidity > 0, "liquidity is zero");
+
+        uint256 totalSupply = totalSupply();
+
+        uint256 amount0 = liquidity * reserve0 / totalSupply;
+        uint256 amount1 = liquidity * reserve1 / totalSupply;
+
+        _burn(msg.sender, liquidity);
+
+        reserve0 -= amount0;
+        reserve1 -= amount1;
+
+        IERC20(token0).safeTransfer(msg.sender, amount0);
+        IERC20(token1).safeTransfer(msg.sender, amount1);
+
+        remainingLP = balanceOf(msg.sender); 
+    }
+
+    function swapToken0ForToken1(uint256 amount0In) external returns (uint256 amount1Out)
+    {
+        require(amount0In > 0, "amount0In is zero");
+
+        uint256 amount0InWithFee = amount0In * 997 / 1000;
+
+        uint256 k = reserve0 * reserve1;
+
+        uint256 newReserve0 = reserve0 + amount0InWithFee;
+        uint256 newReserve1 = k / newReserve0;
+
+        amount1Out = reserve1 - newReserve1;
+
+        IERC20(token0).safeTransferFrom(
+            msg.sender,
+            address(this),
+            amount0In
+        );
+
+        IERC20(token1).safeTransfer(
+            msg.sender,
+            amount1Out
+        );
+
+        reserve0 = reserve0 + amount0In;
+        reserve1 = newReserve1;
+    }
 }
