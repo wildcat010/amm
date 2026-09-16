@@ -307,5 +307,98 @@ contract AMMPairTest is Test {
     }
 
 
+    function test_SwapFeeRemainsInPool() public {
+        uint256 liquidityA = 1000 ether;
+        uint256 liquidityB = 2000 ether;
+        uint256 swapAmount = 100 ether;
 
+        // Alice provides liquidity
+        vm.startPrank(alice);
+
+        tokenA.approve(address(pair), liquidityA);
+        tokenB.approve(address(pair), liquidityB);
+
+        pair.addLiquidity(liquidityA, liquidityB);
+
+        vm.stopPrank();
+
+        // K before swap
+        uint256 kBefore = pair.reserve0() * pair.reserve1();
+
+        // Alice approves token A
+        vm.prank(alice);
+        tokenA.approve(address(pair), swapAmount);
+
+        // Swap A -> B
+        vm.prank(alice);
+        pair.swapToken0ForToken1(swapAmount);
+
+        // K after swap
+        uint256 kAfter = pair.reserve0() * pair.reserve1();
+
+        // Fee should remain in the pool
+        assertGt(kAfter, kBefore);
+    }
+
+    function test_SwapToken1ForToken0() public 
+    {
+        uint256 liquidityA = 1000 ether;
+        uint256 liquidityB = 2000 ether;
+        uint256 swapAmount = 200 ether;
+
+        // Alice provides liquidity
+        vm.startPrank(alice);
+
+        tokenA.approve(address(pair), liquidityA);
+        tokenB.approve(address(pair), liquidityB);
+
+        pair.addLiquidity(liquidityA, liquidityB);
+
+        vm.stopPrank();
+
+        // Alice approves token B for the swap
+        vm.prank(alice);
+        tokenB.approve(address(pair), swapAmount);
+
+        uint256 aliceBalanceBefore = tokenA.balanceOf(alice);
+
+        // Swap B -> A
+        vm.prank(alice);
+        uint256 amount0Out = pair.swapToken1ForToken0(swapAmount);
+
+        uint256 aliceBalanceAfter = tokenA.balanceOf(alice);
+
+        // Calculate expected output with 0.3% fee
+        uint256 amount1InWithFee = swapAmount * 997 / 1000;
+
+        uint256 k = liquidityA * liquidityB;
+
+        uint256 newReserve1ForPricing =
+            liquidityB + amount1InWithFee;
+
+        uint256 expectedReserve0 =
+            k / newReserve1ForPricing;
+
+        uint256 expectedAmount0Out =
+            liquidityA - expectedReserve0;
+
+        // Verify output
+        assertEq(amount0Out, expectedAmount0Out);
+
+        assertEq(
+            aliceBalanceAfter - aliceBalanceBefore,
+            expectedAmount0Out
+        );
+
+        // Full input enters the pool
+        assertEq(
+            pair.reserve1(),
+            liquidityB + swapAmount
+        );
+
+        // Pool should have less A
+        assertLt(pair.reserve0(), liquidityA);
+    }
+
+    
 }

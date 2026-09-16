@@ -47,20 +47,6 @@ contract AMMPair is ERC20  {
         _mint(msg.sender, liquidity);
     }
 
-    function _sqrt(uint256 x) internal pure returns (uint256) {
-        if (x == 0) return 0;
-
-        uint256 z = (x + 1) / 2;
-        uint256 y = x;
-
-        while (z < y) {
-            y = z;
-            z = (x / z + z) / 2;
-        }
-
-        return y;
-    }
-
     function removeLiquidity(uint256 liquidity) external returns (uint256 remainingLP){
         require(liquidity > 0, "liquidity is zero");
 
@@ -82,29 +68,76 @@ contract AMMPair is ERC20  {
 
     function swapToken0ForToken1(uint256 amount0In) external returns (uint256 amount1Out)
     {
-        require(amount0In > 0, "amount0In is zero");
+        return _swap(amount0In, true);
+    }
 
-        uint256 amount0InWithFee = amount0In * 997 / 1000;
+    function swapToken1ForToken0(uint256 amount1In) external returns (uint256 amount0Out)
+    {
+        return _swap(amount1In, false);
+    }
 
+    function _swap(uint256 amountIn, bool zeroForOne) internal returns (uint256 amountOut)
+    {
+        require(amountIn > 0, "amountIn is zero");
+
+        uint256 amountInWithFee = amountIn * 997 / 1000;
         uint256 k = reserve0 * reserve1;
 
-        uint256 newReserve0 = reserve0 + amount0InWithFee;
-        uint256 newReserve1 = k / newReserve0;
+        if (zeroForOne) {
+            // token0 -> token1
+            uint256 newReserve0 = reserve0 + amountInWithFee;
+            uint256 newReserve1 = k / newReserve0;
 
-        amount1Out = reserve1 - newReserve1;
+            amountOut = reserve1 - newReserve1;
 
-        IERC20(token0).safeTransferFrom(
+            IERC20(token0).safeTransferFrom(
             msg.sender,
             address(this),
-            amount0In
-        );
+            amountIn
+            );
 
-        IERC20(token1).safeTransfer(
+            IERC20(token1).safeTransfer(
             msg.sender,
-            amount1Out
-        );
+            amountOut
+            );
 
-        reserve0 = reserve0 + amount0In;
-        reserve1 = newReserve1;
+            reserve0 = reserve0 + amountIn;
+            reserve1 = newReserve1;
+
+        } else {
+            // token1 -> token0
+            uint256 newReserve1 = reserve1 + amountInWithFee;
+            uint256 newReserve0 = k / newReserve1;
+
+            amountOut = reserve0 - newReserve0;
+
+            IERC20(token1).safeTransferFrom(
+            msg.sender,
+            address(this),
+            amountIn
+            );
+
+            IERC20(token0).safeTransfer(
+            msg.sender,
+            amountOut
+            );
+
+            reserve0 = newReserve0;
+            reserve1 = reserve1 + amountIn;
+        }
+    }
+
+    function _sqrt(uint256 x) internal pure returns (uint256) {
+        if (x == 0) return 0;
+
+        uint256 z = (x + 1) / 2;
+        uint256 y = x;
+
+        while (z < y) {
+            y = z;
+            z = (x / z + z) / 2;
+        }
+
+        return y;
     }
 }
