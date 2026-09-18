@@ -400,5 +400,269 @@ contract AMMPairTest is Test {
         assertLt(pair.reserve0(), liquidityA);
     }
 
-    
+    function test_SwapToken1ForToken02nd() public 
+    {
+        uint256 liquidityA = 1000 ether;
+        uint256 liquidityB = 2000 ether;
+        uint256 swapAmount = 100 ether;
+
+        // Alice provides liquidity
+        vm.startPrank(alice);
+
+        tokenA.approve(address(pair), liquidityA);
+        tokenB.approve(address(pair), liquidityB);
+
+        pair.addLiquidity(liquidityA, liquidityB);
+
+        vm.stopPrank();
+
+        (uint256 balanceA, uint256 balanceB) = pair.getTokenBalances();
+
+        // console.log("Pair A:", balanceA / 1 ether);
+        // console.log("Pair B:", balanceB / 1 ether);
+
+        vm.startPrank(alice);
+
+        tokenB.approve(address(pair), swapAmount);
+        uint256 amount0Out = pair.swapToken1ForToken0(swapAmount);
+
+        vm.stopPrank();
+
+        
+       (uint256 balanceAAfter, uint256 balanceBAfter) = pair.getTokenBalances();
+
+        // console.log("Pair A:", balanceAAfter / 1 ether);
+        // console.log("Pair B:", balanceBAfter / 1 ether);
+
+        assertEq(balanceBAfter, liquidityB + swapAmount);
+        assertEq(balanceAAfter, balanceA - amount0Out);
+    }
+
+    function test_multipleSwapsOfAlice() public 
+    {
+        uint256 liquidityA = 1000 ether;
+        uint256 liquidityB = 2000 ether;
+        uint256 swapAmount = 100 ether;
+
+        // Alice provides liquidity
+        vm.startPrank(alice);
+
+        tokenA.approve(address(pair), liquidityA);
+        tokenB.approve(address(pair), liquidityB);
+
+        pair.addLiquidity(liquidityA, liquidityB);
+
+        vm.stopPrank();
+
+        //1st swap
+
+        (uint256 balanceA, uint256 balanceB) = pair.getTokenBalances();
+
+        console.log("Pair A:", balanceA / 1 ether);
+        console.log("Pair B:", balanceB / 1 ether);
+
+        vm.startPrank(alice);
+
+        tokenB.approve(address(pair), swapAmount);
+        uint256 amountOut = pair.swapToken1ForToken0(swapAmount);
+
+        vm.stopPrank();
+
+        
+       (uint256 balanceAAfter, uint256 balanceBAfter) = pair.getTokenBalances();
+
+        // console.log("Pair A:", balanceAAfter / 1 ether);
+        // console.log("Pair B:", balanceBAfter / 1 ether);
+
+        assertEq(balanceAAfter, balanceA - amountOut);
+        assertEq(balanceBAfter, balanceB + swapAmount);
+
+        //2nd Swap
+        vm.startPrank(alice);
+
+        tokenA.approve(address(pair), swapAmount);
+        uint256 amountOut2 = pair.swapToken0ForToken1(swapAmount);
+
+        vm.stopPrank();
+
+       (uint256 balanceAAfter2, uint256 balanceBAfter2) = pair.getTokenBalances();
+
+        // console.log("Pair A:", balanceAAfter2 / 1 ether);
+        // console.log("Pair B:", balanceBAfter2 / 1 ether);
+
+        assertEq(balanceBAfter2, balanceBAfter - amountOut2);
+        assertEq(balanceAAfter2, balanceAAfter + swapAmount);
+    }
+
+    function test_SwapFeeRemainsInPool2nd() public
+    {
+        uint256 liquidityA = 1000 ether;
+        uint256 liquidityB = 2000 ether;
+        uint256 swapAmount1 = 10 ether;
+        uint256 swapAmount2 = 100 ether;
+
+        // Alice provides liquidity
+        vm.startPrank(alice);
+
+        tokenA.approve(address(pair), liquidityA);
+        tokenB.approve(address(pair), liquidityB);
+
+        pair.addLiquidity(liquidityA, liquidityB);
+
+
+        tokenB.approve(address(pair), swapAmount1);
+
+        uint256 amountOut = pair.swapToken1ForToken0(swapAmount1);
+
+        console.log("Amount Out:", amountOut * swapAmount2);
+
+        vm.stopPrank();
+
+        AMMPair pair2 = new AMMPair(
+        address(tokenA),
+        address(tokenB)
+        );
+
+        vm.startPrank(alice);
+
+        tokenA.approve(address(pair2), liquidityA);
+        tokenB.approve(address(pair2), liquidityB);
+
+        pair2.addLiquidity(liquidityA, liquidityB);
+
+        tokenB.approve(address(pair2), swapAmount2);
+
+        uint256 amount2Out = pair2.swapToken1ForToken0(swapAmount2);
+
+        console.log("Amount Out 2 :", amount2Out * swapAmount1);
+
+        vm.stopPrank();
+
+        assertGt(
+            amountOut * swapAmount2,
+            amount2Out * swapAmount1
+        );
+       
+    }
+
+    function test_slippageProtection() public {
+        uint256 liquidityA = 1000 ether;
+        uint256 liquidityB = 2000 ether;
+        uint256 swapAmount = 100 ether;
+
+        // Alice provides liquidity
+        vm.startPrank(alice);
+
+        tokenA.approve(address(pair), liquidityA);
+        tokenB.approve(address(pair), liquidityB);
+
+        pair.addLiquidity(liquidityA, liquidityB);
+
+
+        tokenB.approve(address(pair), swapAmount);
+        vm.stopPrank();
+
+        uint256 amountInWithFee = swapAmount * 997 / 1000;
+        uint256 k = liquidityA * liquidityB;
+
+        uint256 newReserveB = liquidityB + amountInWithFee;
+        uint256 expectedReserveA = k / newReserveB;
+
+        uint256 expectedAmountOut = liquidityA - expectedReserveA;
+
+        console.log("Expected Amount Out:", expectedAmountOut);
+        console.log("Expected Amount Out:", expectedAmountOut / 1 ether);
+
+        uint256 minAmountOut = expectedAmountOut * 99 / 100;
+
+        console.log("Min Amount Out:", minAmountOut);
+        console.log("Min Amount Out:", minAmountOut / 1 ether);
+
+        vm.startPrank(alice);
+
+        uint256 amountOut = pair.swapToken1ForToken0(
+            swapAmount,
+            minAmountOut
+        );
+
+        vm.stopPrank();
+
+        assertGe(amountOut, minAmountOut);
+
+
+        uint256 minAmountOutExceed = expectedAmountOut + 1 ether;
+
+        vm.startPrank(alice);
+
+        vm.expectRevert("slippage exceeded");
+
+        pair.swapToken1ForToken0(
+            swapAmount,
+            minAmountOutExceed
+        );
+
+        vm.stopPrank();
+    }
+
+    function test_EmitsLiquidityAdded() public {
+        uint256 amount0 = 1000 ether;
+        uint256 amount1 = 2000 ether;
+
+        uint256 expectedLiquidity = 1414213562373095048801;
+
+        vm.startPrank(alice);
+
+        tokenA.approve(address(pair), amount0);
+        tokenB.approve(address(pair), amount1);
+
+        vm.expectEmit(true, false, false, true);
+
+        emit AMMPair.LiquidityAdded(
+            alice,
+            amount0,
+            amount1,
+            expectedLiquidity
+        );
+
+        pair.addLiquidity(amount0, amount1);
+
+        vm.stopPrank();
+    }
+
+    function test_getAmountOut() public {
+        uint256 liquidityA = 1000 ether;
+        uint256 liquidityB = 2000 ether;
+        uint256 swapAmount = 100 ether;
+
+        // Alice provides liquidity
+        vm.startPrank(alice);
+
+        tokenA.approve(address(pair), liquidityA);
+        tokenB.approve(address(pair), liquidityB);
+
+        pair.addLiquidity(liquidityA, liquidityB);
+        vm.stopPrank();
+
+        uint256 amountOut = pair.getAmountOut(swapAmount, false);
+
+        console.log("Amount Out:", amountOut);
+        console.log("Amount Out:", amountOut / 1 ether);
+
+         // Calculate expected output independently
+        uint256 amountInWithFee = swapAmount * 997 / 1000;
+        uint256 k = liquidityA * liquidityB;
+
+        uint256 newReserveB = liquidityB + amountInWithFee;
+        uint256 expectedReserveA = k / newReserveB;
+
+        uint256 expectedAmountOut = liquidityA - expectedReserveA;
+
+        console.log("Amount Out:", amountOut);
+        console.log("Amount Out:", amountOut / 1 ether);
+
+        console.log("Expected Amount Out:", expectedAmountOut);
+        console.log("Expected Amount Out:", expectedAmountOut / 1 ether);
+
+        assertEq(amountOut, expectedAmountOut);
+    }
 }
