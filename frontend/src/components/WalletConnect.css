@@ -1,0 +1,14 @@
+.wallet-connect {
+  background: transparent;
+  border: 1px solid #13ada3;
+  color: #13ada3;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.wallet-connect:hover {
+  background: transparent;
+  border-color: #13ada3;
+  color: #13ada3;
+}
