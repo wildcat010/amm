@@ -1,0 +1,49 @@
+.nav-root {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.nav-tabs {
+  display: flex;
+  gap: 2px;
+  background: #232b27;
+  border: 1px solid #232b27;
+  border-radius: 10px;
+  padding: 2px;
+  width: fit-content;
+}
+
+.nav-tab {
+  font-size: 14px;
+  font-weight: 500;
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #8b958f;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.nav-tab:hover {
+  color: #fff;
+}
+
+.nav-tab:focus-visible {
+  outline: 2px solid #f2a93b;
+  outline-offset: 2px;
+}
+
+.nav-tab[data-state="active"] {
+  background: #171d1a;
+  color: #edefec;
+}
+
+.nav-content:focus-visible {
+  outline: 2px solid #f2a93b;
+  outline-offset: 2px;
+  border-radius: 14px;
+}
