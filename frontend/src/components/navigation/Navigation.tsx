@@ -1,6 +1,7 @@
 import "./Navigation.css";
 import { Tabs } from "radix-ui";
 import type { ReactNode } from "react";
+import AddLiquidity from "../addLiquidity/AddLiquidity";
 
 interface NavigationProps {
   swap: ReactNode;
@@ -29,7 +30,7 @@ function Navigation() {
           SWAP
         </Tabs.Content>
         <Tabs.Content className="nav-content" value="add">
-          LIQUIDITY
+          <AddLiquidity />
         </Tabs.Content>
         <Tabs.Content className="nav-content" value="remove">
           REMOVE LIQUIDITY

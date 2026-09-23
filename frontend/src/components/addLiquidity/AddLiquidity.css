@@ -1,0 +1,45 @@
+.add-liquidity {
+  display: flex;
+  align-items: stretch;
+
+  min-height: 64px;
+
+  background: #0d1311;
+  border: 1px solid #202a27;
+  border-radius: 12px;
+
+  overflow: hidden;
+
+  padding: 10px 16px;
+
+  margin: 30px 40px;
+}
+
+input,
+textarea,
+button {
+  all: unset;
+  box-sizing: border-box;
+}
+
+.FormRoot {
+  width: 260px;
+}
+
+.FormField {
+  display: grid;
+  margin-bottom: 10px;
+}
+
+.FormLabel {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 35px;
+  color: white;
+}
+
+.FormMessage {
+  font-size: 13px;
+  color: white;
+  opacity: 0.8;
+}
