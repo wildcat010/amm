@@ -1,14 +1,8 @@
 import "./Navigation.css";
 import { Tabs } from "radix-ui";
-import type { ReactNode } from "react";
 import AddLiquidity from "../addLiquidity/AddLiquidity";
 
-interface NavigationProps {
-  swap: ReactNode;
-  addLiquidity: ReactNode;
-  removeLiquidity: ReactNode;
-  defaultTab?: "swap" | "add" | "remove";
-}
+
 
 function Navigation() {
   return (

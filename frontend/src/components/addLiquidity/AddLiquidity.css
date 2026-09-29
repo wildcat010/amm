@@ -1,45 +1,85 @@
-.add-liquidity {
-  display: flex;
-  align-items: stretch;
-
-  min-height: 64px;
-
-  background: #0d1311;
-  border: 1px solid #202a27;
-  border-radius: 12px;
-
-  overflow: hidden;
-
-  padding: 10px 16px;
-
-  margin: 30px 40px;
-}
-
-input,
-textarea,
-button {
-  all: unset;
+.add-liquidity-card {
+  width: 100%;
+  max-width: 500px;
+  margin: 30px auto;
+  padding: 24px;
   box-sizing: border-box;
+
+  background: #181818;
+  border: 1px solid #333;
+  border-radius: 16px;
+
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
 }
 
-.FormRoot {
-  width: 260px;
+.add-liquidity-title {
+  margin: 0 0 24px;
+  font-size: 22px;
+  font-weight: 600;
 }
 
-.FormField {
-  display: grid;
-  margin-bottom: 10px;
+.liquidity-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.FormLabel {
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 35px;
+.liquidity-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.liquidity-label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.liquidity-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 16px;
+
+  border: 1px solid #444;
+  border-radius: 10px;
+
+  background: #101010;
   color: white;
+
+  font-size: 18px;
+  outline: none;
 }
 
-.FormMessage {
-  font-size: 13px;
-  color: white;
+.liquidity-input:focus {
+  border-color: #f5a623;
+}
+
+.liquidity-input::placeholder {
+  color: #777;
+}
+
+.add-liquidity-button {
+  width: 100%;
+  margin-top: 4px;
+  padding: 14px 20px;
+
+  border: none;
+  border-radius: 10px;
+
+  background: linear-gradient(90deg, #f5a623, #ffd54a);
+  color: #111;
+
+  font-size: 16px;
+  font-weight: 700;
+
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.add-liquidity-button:hover {
+  opacity: 0.9;
+}
+
+.add-liquidity-button:active {
   opacity: 0.8;
 }
