@@ -35,14 +35,18 @@ function PoolState({ poolStats }: PoolStateProps) {
 
       <div className="pool-stat">
         <span className="pool-stat-label">LP supply</span>
-        <span className="pool-stat-value">{poolStats.totalSupply}</span>
+        <span className="pool-stat-value">
+          {Number(poolStats.totalSupply).toFixed(4)}
+        </span>
       </div>
 
       <Separator.Root className="pool-stat-separator" orientation="vertical" />
 
       <div className="pool-stat">
         <span className="pool-stat-label">Your LP share</span>
-        <span className="pool-stat-value">{poolStats.userLpBalance}</span>
+        <span className="pool-stat-value">
+          {Number(poolStats.userLpBalance).toFixed(4)}
+        </span>
       </div>
     </div>
   );

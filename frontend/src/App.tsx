@@ -81,17 +81,26 @@ function App() {
     });
   }, [reserve0Data, reserve1Data, totalSupplyData, userLpBalanceData]);
 
+  async function refreshPoolStats() {
+    await Promise.all([
+      refetchReserve0(),
+      refetchReserve1(),
+      refetchTotalSupply(),
+      refetchUserLpBalance(),
+    ]);
+  }
+
   return (
     <>
       <div className="header">
-        <h1>Hello, Vite + React!</h1>
+        <h1>AMM</h1>
         <WalletConnect />
       </div>
       <div>
         <PoolState poolStats={poolStats} />
       </div>
       <div className="navigation">
-        <Navigation />
+        <Navigation onLiquidityAdded={refreshPoolStats} />
       </div>
     </>
   );

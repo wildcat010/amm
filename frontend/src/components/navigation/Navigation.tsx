@@ -1,10 +1,20 @@
 import "./Navigation.css";
 import { Tabs } from "radix-ui";
 import AddLiquidity from "../addLiquidity/AddLiquidity";
+import Swap from "../swap/swap";
+import RemoveLiquidity from "../removeLiquidity/removeLiquidity";
 
+type NavigationProps = {
+  onLiquidityAdded: () => Promise<void>;
+  onSwapRefresh: () => Promise<void>;
+  onRemoveLiquidityRefresh: () => Promise<void>;
+};
 
-
-function Navigation() {
+function Navigation({
+  onLiquidityAdded,
+  onSwapRefresh,
+  onRemoveLiquidityRefresh,
+}: NavigationProps) {
   return (
     <>
       <Tabs.Root className="nav-root" defaultValue="swap">
@@ -21,13 +31,15 @@ function Navigation() {
         </Tabs.List>
 
         <Tabs.Content className="nav-content" value="swap">
-          SWAP
+          <Swap onSwapRefresh={onSwapRefresh} />
         </Tabs.Content>
         <Tabs.Content className="nav-content" value="add">
-          <AddLiquidity />
+          <AddLiquidity onLiquidityAdded={onLiquidityAdded} />
         </Tabs.Content>
         <Tabs.Content className="nav-content" value="remove">
-          REMOVE LIQUIDITY
+          <RemoveLiquidity
+            onRemoveLiquidityRefresh={onRemoveLiquidityRefresh}
+          />
         </Tabs.Content>
       </Tabs.Root>
     </>

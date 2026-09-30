@@ -1,6 +1,5 @@
 import "./AddLiquidity.css";
 import { Form } from "radix-ui";
-
 import { useState } from "react";
 import { usePublicClient, useWriteContract, useAccount } from "wagmi";
 import { parseUnits } from "viem";
@@ -31,19 +30,25 @@ const ERC20_ABI = [
   },
 ] as const;
 
-function AddLiquidity() {
+type AddLiquidityProps = {
+  onLiquidityAdded: () => Promise<void>;
+};
+
+function AddLiquidity({ onLiquidityAdded }: AddLiquidityProps) {
   const [depositA, setDepositA] = useState("");
   const [depositB, setDepositB] = useState("");
-  const [isAddingLiquidity, setIsAddingLiquidity] = useState(false);
+  const [status, setStatus] = useState("");
   const [error, setError] = useState("");
 
   const { writeContractAsync } = useWriteContract();
-
   const publicClient = usePublicClient();
   const { address } = useAccount();
 
+  const isAddingLiquidity = status !== "";
+
   async function handleAddLiquidity() {
     setError("");
+    setStatus("");
 
     if (!depositA || !depositB) {
       setError("Enter both deposit amounts.");
@@ -55,52 +60,89 @@ function AddLiquidity() {
       return;
     }
 
+    if (!publicClient || !address) {
+      setError("Wallet not connected.");
+      return;
+    }
+
     try {
-      setIsAddingLiquidity(true);
       const amountA = parseUnits(depositA, 18);
-      const amountB = parseUnits(depositB, 18); // 1. Approve Token A
-      await writeContractAsync({
+      const amountB = parseUnits(depositB, 18);
+
+      // 1. Approve Token A
+      setStatus("Approving MTKA...");
+
+      const approveATx = await writeContractAsync({
         address: CONTRACTS.sepolia.tokenA,
         abi: ERC20_ABI,
         functionName: "approve",
         args: [CONTRACTS.sepolia.pair, amountA],
       });
+
+      await publicClient.waitForTransactionReceipt({
+        hash: approveATx,
+      });
+
       // 2. Approve Token B
-      await writeContractAsync({
+      setStatus("Approving MTKB...");
+
+      const approveBTx = await writeContractAsync({
         address: CONTRACTS.sepolia.tokenB,
         abi: ERC20_ABI,
         functionName: "approve",
         args: [CONTRACTS.sepolia.pair, amountB],
       });
 
-      const gas = await publicClient!.estimateContractGas({
+      await publicClient.waitForTransactionReceipt({
+        hash: approveBTx,
+      });
+
+      // 3. Estimate gas
+      setStatus("Estimating gas...");
+
+      const gas = await publicClient.estimateContractGas({
         address: CONTRACTS.sepolia.pair,
         abi: AMMPairArtifact.abi,
         functionName: "addLiquidity",
         args: [amountA, amountB],
         account: address,
       });
-      // 3. Add liquidity
-      await writeContractAsync({
+
+      // 4. Add liquidity
+      setStatus("Adding liquidity...");
+
+      const addLiquidityTx = await writeContractAsync({
         address: CONTRACTS.sepolia.pair,
         abi: AMMPairArtifact.abi,
         functionName: "addLiquidity",
         args: [amountA, amountB],
-        gas: gas,
+        gas,
       });
+
+      // 5. Wait for add liquidity transaction
+      setStatus("Confirming transaction...");
+
+      await publicClient.waitForTransactionReceipt({
+        hash: addLiquidityTx,
+      });
+
+      // 6. Refresh pool state
+      await onLiquidityAdded();
+
       setDepositA("");
       setDepositB("");
+      setStatus("");
     } catch (err) {
       console.error(err);
+
+      setStatus("");
+
       setError(err instanceof Error ? err.message : "Failed to add liquidity.");
-    } finally {
-      setIsAddingLiquidity(false);
     }
   }
 
   return (
     <div className="add-liquidity-card">
-      <h2 className="add-liquidity-title">Add Liquidity</h2>
       <Form.Root
         className="liquidity-form"
         onSubmit={(event) => {
@@ -109,40 +151,44 @@ function AddLiquidity() {
         }}
       >
         <Form.Field className="liquidity-field" name="MTKA">
-          <Form.Label className="liquidity-label">MTKA</Form.Label>
-
           <Form.Control asChild>
-            <input
-              className="liquidity-input"
-              type="number"
-              placeholder="0.0"
-              min="0"
-              step="any"
-              value={depositA}
-              onChange={(event) => setDepositA(event.target.value)}
-              disabled={isAddingLiquidity}
-            />
+            <div className="liquidity-input-wrapper">
+              <input
+                className="liquidity-input"
+                type="number"
+                placeholder="0.0"
+                min="0"
+                step="any"
+                value={depositA}
+                onChange={(event) => setDepositA(event.target.value)}
+                disabled={isAddingLiquidity}
+              />
+
+              <div className="token-symbol">MTKA</div>
+            </div>
           </Form.Control>
         </Form.Field>
 
         <Form.Field className="liquidity-field" name="MTKB">
-          <Form.Label className="liquidity-label">MTKB</Form.Label>
-
           <Form.Control asChild>
-            <input
-              className="liquidity-input"
-              type="number"
-              placeholder="0.0"
-              min="0"
-              step="any"
-              value={depositB}
-              onChange={(event) => setDepositB(event.target.value)}
-              disabled={isAddingLiquidity}
-            />
+            <div className="liquidity-input-wrapper">
+              <input
+                className="liquidity-input"
+                type="number"
+                placeholder="0.0"
+                min="0"
+                step="any"
+                value={depositB}
+                onChange={(event) => setDepositB(event.target.value)}
+                disabled={isAddingLiquidity}
+              />
+
+              <div className="token-symbol">MTKB</div>
+            </div>
           </Form.Control>
         </Form.Field>
 
-        {error && <div className="liquidity-error"> {error} </div>}
+        {error && <div className="liquidity-error">{error}</div>}
 
         <Form.Submit asChild>
           <button
@@ -150,7 +196,7 @@ function AddLiquidity() {
             type="submit"
             disabled={isAddingLiquidity}
           >
-            {isAddingLiquidity ? "Adding Liquidity..." : "Add Liquidity"}
+            {isAddingLiquidity ? status : "Add Liquidity"}
           </button>
         </Form.Submit>
       </Form.Root>
