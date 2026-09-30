@@ -18,7 +18,7 @@ function PoolState({ poolStats }: PoolStateProps) {
       <div className="pool-stat">
         <span className="pool-stat-label">Reserve MTKA</span>
         <span className="pool-stat-value pool-stat-value-a">
-          {poolStats.reserve0}
+          {Number(poolStats.reserve0).toFixed(4)}
         </span>
       </div>
 
@@ -27,7 +27,7 @@ function PoolState({ poolStats }: PoolStateProps) {
       <div className="pool-stat">
         <span className="pool-stat-label">Reserve MTKB</span>
         <span className="pool-stat-value pool-stat-value-b">
-          {poolStats.reserve1}
+          {Number(poolStats.reserve1).toFixed(4)}
         </span>
       </div>
 
