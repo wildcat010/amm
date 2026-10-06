@@ -1,7 +1,14 @@
 import "./getTokens.css";
+import { Form } from "radix-ui";
 
 function GetTokens() {
-  return <>Get MTKA and MTKB</>;
+  return (
+    <>
+      <div className="getTokens-card">
+        <Form.Root className="getTokens-form"></Form.Root>
+      </div>
+    </>
+  );
 }
 
 export default GetTokens;
