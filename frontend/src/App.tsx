@@ -100,7 +100,11 @@ function App() {
         <PoolState poolStats={poolStats} />
       </div>
       <div className="navigation">
-        <Navigation onLiquidityAdded={refreshPoolStats} />
+        <Navigation
+          onLiquidityAdded={refreshPoolStats}
+          onSwapRefresh={refreshPoolStats}
+          onRemoveLiquidityRefresh={refreshPoolStats}
+        />
       </div>
     </>
   );

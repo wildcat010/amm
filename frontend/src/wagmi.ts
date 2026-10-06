@@ -3,6 +3,6 @@ import { sepolia } from "wagmi/chains";
 
 export const config = getDefaultConfig({
   appName: "My AMM",
-  projectId: "YOUR_WALLETCONNECT_PROJECT_ID",
+  projectId: "0011927d2b8a84a41cf94b5f4b9ae5ef",
   chains: [sepolia],
 });

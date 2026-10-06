@@ -1,8 +1,12 @@
 import "./removeLiquidity.css";
-import { Tabs } from "radix-ui";
 import { useEffect, useState } from "react";
-import { formatUnits, parseUnits } from "viem";
-import { useAccount, useReadContract } from "wagmi";
+import { formatUnits } from "viem";
+import {
+  useAccount,
+  usePublicClient,
+  useReadContract,
+  useWriteContract,
+} from "wagmi";
 
 import { CONTRACTS } from "../../contracts/addresses";
 import AMMPairArtifact from "./../../../../contracts/out/AMMPair.sol/AMMPair.json";
@@ -18,11 +22,18 @@ type tokenBalanceObject = {
 
 function RemoveLiquidity({ onRemoveLiquidityRefresh }: RemoveLiquidityProps) {
   const [percentage, setPercentage] = useState(0);
+  const { writeContractAsync } = useWriteContract();
+  const publicClient = usePublicClient();
   const { address } = useAccount();
+
   const [receiveToken, setReceiveToken] = useState<tokenBalanceObject>({
     mtka: 0,
     mtkb: 0,
   });
+  const [status, setStatus] = useState("");
+  const [error, setError] = useState("");
+
+  const isRemovingLiquidity = status !== "";
 
   const { data: userLpBalanceData, refetch: refetchUserLpBalance } =
     useReadContract({
@@ -63,11 +74,52 @@ function RemoveLiquidity({ onRemoveLiquidityRefresh }: RemoveLiquidityProps) {
   };
 
   const handleRemoveLiquidity = async () => {
-    await onRemoveLiquidityRefresh();
-    await refetchUserLpBalance();
-    await refetchTotalSupply();
-    await refetchReserve0();
-    await refetchReserve1();
+    try {
+      if (percentage <= 0) {
+        throw new Error("Percentage must be greater than 0");
+      }
+      if (!userLpBalanceData) {
+        throw new Error("LP balance not available");
+      }
+      if (!publicClient) {
+        throw new Error("Public client not available");
+      }
+      setError("");
+      const liquidityToRemove =
+        ((userLpBalanceData as bigint) * BigInt(percentage)) / 100n;
+
+      const removeLiquidityTx = await writeContractAsync({
+        address: CONTRACTS.sepolia.pair,
+        abi: AMMPairArtifact.abi,
+        functionName: "removeLiquidity",
+        args: [liquidityToRemove],
+      });
+
+      // Wait for the swap transaction
+      setStatus("Confirming transaction...");
+
+      await publicClient?.waitForTransactionReceipt({
+        hash: removeLiquidityTx,
+      });
+      setStatus("");
+
+      await onRemoveLiquidityRefresh();
+      await refetchUserLpBalance();
+      await refetchTotalSupply();
+      await refetchReserve0();
+      await refetchReserve1();
+
+      setPercentage(0);
+    } catch (err) {
+      console.error(err);
+
+      setError("Failed to remove liquidity");
+      setStatus("");
+    }
+  };
+
+  const handleRemoveLiquidityClick = async () => {
+    await handleRemoveLiquidity();
   };
 
   useEffect(() => {
@@ -85,12 +137,19 @@ function RemoveLiquidity({ onRemoveLiquidityRefresh }: RemoveLiquidityProps) {
         ? formatUnits(totalSupplyData, 18)
         : 0;
 
+    if (totalSupplyDataF === 0) {
+      setReceiveToken({
+        mtka: 0,
+        mtkb: 0,
+      });
+      return;
+    }
+
     const amount0 = liquidityToRemove * (reserve0DataF / totalSupplyDataF);
     const amount1 = liquidityToRemove * (reserve1DataF / totalSupplyDataF);
 
     setReceiveToken({ mtka: amount0, mtkb: amount1 });
   }, [
-    receiveToken,
     percentage,
     userLpBalanceData,
     reserve0Data,
@@ -151,7 +210,15 @@ function RemoveLiquidity({ onRemoveLiquidityRefresh }: RemoveLiquidityProps) {
           </div>
         </div>
 
-        <button className="remove-liquidity-button">Remove liquidity</button>
+        {error && <div className="liquidity-error">{error}</div>}
+
+        <button
+          className="remove-liquidity-button"
+          disabled={isRemovingLiquidity}
+          onClick={() => handleRemoveLiquidityClick()}
+        >
+          {isRemovingLiquidity ? status : "Remove Liquidity"}
+        </button>
 
         <div className="remove-liquidity-balance">
           Your LP balance:{" "}
