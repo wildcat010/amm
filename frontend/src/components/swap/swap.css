@@ -86,13 +86,14 @@
     opacity 0.2s ease,
     transform 0.1s ease;
 }
-.swap-button:hover:not(:disabled) {
+.swap-button:hover {
   opacity: 0.9;
 }
-.swap-button:active:not(:disabled) {
+.swap-button:active {
   transform: scale(0.99);
 }
-.swap-button:disabled {
+.swap-button:disabled,
+.swap-button:disabled:hover {
   opacity: 0.5;
   cursor: not-allowed;
 }

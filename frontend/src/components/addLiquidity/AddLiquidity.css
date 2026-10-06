@@ -69,22 +69,20 @@
   margin-top: 4px;
   border: none;
   border-radius: 12px;
-  background: linear-gradient(90deg, #f5a623, #ffd54a);
+  background: #f6a832;
   color: #111;
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
-  transition:
-    opacity 0.2s ease,
-    transform 0.1s ease;
 }
-.add-liquidity-button:hover:not(:disabled) {
+.add-liquidity-button:hover {
   opacity: 0.9;
 }
-.add-liquidity-button:active:not(:disabled) {
+.add-liquidity-button:active {
   transform: scale(0.99);
 }
-.add-liquidity-button:disabled {
+.add-liquidity-button:disabled,
+.add-liquidity-button:disabled:hover {
   opacity: 0.5;
   cursor: not-allowed;
 }

@@ -3,6 +3,7 @@ import { Tabs } from "radix-ui";
 import AddLiquidity from "../addLiquidity/AddLiquidity";
 import Swap from "../swap/swap";
 import RemoveLiquidity from "../removeLiquidity/removeLiquidity";
+import GetTokens from "../getTokens/getTokens";
 
 type NavigationProps = {
   onLiquidityAdded: () => Promise<void>;
@@ -28,6 +29,9 @@ function Navigation({
           <Tabs.Trigger className="nav-tab" value="remove">
             Remove liquidity
           </Tabs.Trigger>
+          <Tabs.Trigger className="nav-tab" value="getTokens">
+            Get MTKA&MTKB
+          </Tabs.Trigger>
         </Tabs.List>
 
         <Tabs.Content className="nav-content" value="swap">
@@ -40,6 +44,9 @@ function Navigation({
           <RemoveLiquidity
             onRemoveLiquidityRefresh={onRemoveLiquidityRefresh}
           />
+        </Tabs.Content>
+        <Tabs.Content className="nav-content" value="getTokens">
+          <GetTokens />
         </Tabs.Content>
       </Tabs.Root>
     </>

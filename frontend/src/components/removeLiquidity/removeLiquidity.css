@@ -77,6 +77,12 @@
   background: #ffb23f;
 }
 
+.remove-liquidity-button:disabled,
+.remove-liquidity-button:disabled:hover {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .remove-liquidity-balance {
   margin-top: 18px;
   font-size: 12px;
