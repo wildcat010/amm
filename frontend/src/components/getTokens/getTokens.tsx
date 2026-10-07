@@ -5,7 +5,7 @@ function GetTokens() {
   return (
     <>
       <div className="getTokens-card">
-        <Form.Root className="getTokens-form"></Form.Root>
+        <Form.Root className="getTokens-form">boom</Form.Root>
       </div>
     </>
   );
