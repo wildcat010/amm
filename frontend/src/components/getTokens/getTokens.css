@@ -1,115 +1,110 @@
-.getTokens-card {
+.get-tokens {
+  width: 100%;
+
   box-sizing: border-box;
-  padding: 24px;
-  background: #181818;
-  border: 1px solid #2f2f2f;
-  border-radius: 16px;
-}
-.getTokens-label {
-  font-size: 13px;
-  color: #8b958f;
-  margin-bottom: 8px;
+
+  padding: 22px;
+
+  border: 1px solid #26302d;
+
+  border-radius: 14px;
+
+  background: #0f1513;
+
+  color: #9aa6a2;
 }
 
-.getTokens-field {
-  width: 100%;
-}
-.getTokens-input-wrapper {
-  width: 100%;
-  height: 64px;
-  box-sizing: border-box;
+.get-tokens-header {
   display: flex;
-  align-items: center;
-  padding: 0 8px 0 16px;
-  background: #101010;
-  border: 1px solid #333;
-  border-radius: 12px;
-  transition: border-color 0.2s ease;
-}
-.getTokens-input-wrapper:focus-within {
-  border-color: #f5a623;
-}
-.getTokens-input {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  outline: none;
-  background: transparent;
-  color: white;
-  font-size: 24px;
-  font-weight: 500;
-}
-.getTokens-input::placeholder {
-  color: #555;
-}
-.getTokens-input:disabled {
-  opacity: 0.6;
-} /* Remove browser number-input arrows */
-.getTokens-input::-webkit-outer-spin-button,
-.getTokens-input::-webkit-inner-spin-button {
-  margin: 0;
-  -webkit-appearance: none;
-}
-.getTokens-input[type="number"] {
-  appearance: textfield;
-  -moz-appearance: textfield;
-}
-.getTokens-rate {
-  display: flex;
-  align-items: center;
+
   justify-content: space-between;
-  padding: 16px 0;
-}
-.token-symbol {
-  flex-shrink: 0;
-  padding: 9px 12px;
-  background: #252525;
-  border: 1px solid #3a3a3a;
-  border-radius: 9px;
-  color: #8b958f;
-  font-size: 14px;
-  font-weight: 700;
+
+  align-items: center;
+
+  margin-bottom: 8px;
+
+  font-size: 13px;
 }
 
-.getTokens-button {
+.get-tokens-input {
   width: 100%;
-  height: 56px;
-  margin-top: 4px;
-  border: none;
-  border-radius: 12px;
-  background: linear-gradient(90deg, #f5a623, #ffd54a);
-  color: #111;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition:
-    opacity 0.2s ease,
-    transform 0.1s ease;
-}
-.getTokens-button:hover {
-  opacity: 0.9;
+
+  height: 42px;
+
+  box-sizing: border-box;
+
+  padding: 0 12px;
+
+  border: 1px solid #26302d;
+
+  border-radius: 8px;
+
+  background: #0b100f;
+
+  color: #ffffff;
+
+  font-size: 13px;
+
+  outline: none;
 }
 
-.getTokens-button:disabled,
-.getTokens-button:disabled:hover {
-  opacity: 0.5;
+.get-tokens-input:focus {
+  border-color: #8d6525;
+}
+
+.get-tokens-input::placeholder {
+  color: #65716d;
+}
+
+.get-tokens-input:disabled {
+  opacity: 0.6;
+
   cursor: not-allowed;
 }
-.getTokens-error {
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: rgba(255, 70, 70, 0.1);
-  border: 1px solid rgba(255, 70, 70, 0.3);
-  color: #ff6b6b;
-  font-size: 13px;
-  line-height: 1.4;
-  overflow-wrap: anywhere;
+
+.get-tokens-error {
+  margin-top: 10px;
+
+  font-size: 12px;
+
+  color: #d66b5d;
 }
 
-.getTokens-switch {
-  padding: 20px 0px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.get-tokens-buttons {
+  display: grid;
+
+  grid-template-columns: repeat(2, 1fr);
+
+  gap: 8px;
+
+  margin-top: 16px;
+}
+
+.get-tokens-button {
   width: 100%;
+
+  height: 48px;
+
+  border: none;
+
+  border-radius: 10px;
+
+  background: #f6a832;
+
+  color: #000000;
+
+  font-size: 15px;
+
+  cursor: pointer;
+}
+
+.get-tokens-button:hover {
+  background: #ffb23f;
+}
+
+.get-tokens-button:disabled,
+.get-tokens-button:disabled:hover {
+  opacity: 0.6;
+
+  cursor: not-allowed;
 }

@@ -30,7 +30,7 @@ function Navigation({
             Remove liquidity
           </Tabs.Trigger>
           <Tabs.Trigger className="nav-tab" value="getTokens">
-            Get MTKA&MTKB
+            Get MTKA & MTKB
           </Tabs.Trigger>
         </Tabs.List>
 
