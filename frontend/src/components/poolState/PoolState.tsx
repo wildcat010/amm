@@ -46,6 +46,12 @@ function PoolState({ poolStats }: PoolStateProps) {
         <span className="pool-stat-label">Your LP share</span>
         <span className="pool-stat-value">
           {Number(poolStats.userLpBalance).toFixed(4)}
+          <br></br>
+          {(
+            (Number(poolStats.userLpBalance) / Number(poolStats.totalSupply)) *
+            100.0
+          ).toFixed(2)}
+          %
         </span>
       </div>
     </div>
