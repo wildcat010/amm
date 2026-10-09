@@ -4,7 +4,7 @@ import { useState } from "react";
 import { usePublicClient, useWriteContract, useAccount } from "wagmi";
 import { parseUnits } from "viem";
 import { CONTRACTS } from "../../contracts/addresses";
-import AMMPairArtifact from "./../../../../contracts/out/AMMPair.sol/AMMPair.json";
+import RouterArtifact from "./../../../../contracts/out/Router.sol/Router.json";
 
 const ERC20_ABI = [
   {
@@ -27,6 +27,23 @@ const ERC20_ABI = [
         type: "bool",
       },
     ],
+  },
+] as const;
+
+export const ROUTER_ABI = [
+  {
+    type: "function",
+    name: "addLiquidity",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "tokenA", type: "address" },
+      { name: "tokenB", type: "address" },
+      { name: "amountA", type: "uint256" },
+      { name: "amountB", type: "uint256" },
+      { name: "recipient", type: "address" },
+      { name: "deadline", type: "uint256" },
+    ],
+    outputs: [{ name: "liquidity", type: "uint256" }],
   },
 ] as const;
 
@@ -68,6 +85,7 @@ function AddLiquidity({ onLiquidityAdded }: AddLiquidityProps) {
     try {
       const amountA = parseUnits(depositA, 18);
       const amountB = parseUnits(depositB, 18);
+      const deadline = BigInt(Math.floor(Date.now() / 1000) + 20 * 60);
 
       // 1. Approve Token A
       setStatus("Approving MTKA...");
@@ -97,36 +115,32 @@ function AddLiquidity({ onLiquidityAdded }: AddLiquidityProps) {
         hash: approveBTx,
       });
 
-      // 3. Estimate gas
-      setStatus("Estimating gas...");
-
-      const gas = await publicClient.estimateContractGas({
-        address: CONTRACTS.sepolia.pair,
-        abi: AMMPairArtifact.abi,
-        functionName: "addLiquidity",
-        args: [amountA, amountB],
-        account: address,
-      });
-
-      // 4. Add liquidity
+      // 3. Add liquidity
       setStatus("Adding liquidity...");
 
       const addLiquidityTx = await writeContractAsync({
-        address: CONTRACTS.sepolia.pair,
-        abi: AMMPairArtifact.abi,
+        address: CONTRACTS.sepolia.router.router,
+        abi: RouterArtifact.abi,
         functionName: "addLiquidity",
-        args: [amountA, amountB],
-        gas,
+
+        args: [
+          CONTRACTS.sepolia.tokenA,
+          CONTRACTS.sepolia.tokenB,
+          amountA,
+          amountB,
+          address,
+          deadline,
+        ],
       });
 
-      // 5. Wait for add liquidity transaction
+      // 4. Wait for add liquidity transaction
       setStatus("Confirming transaction...");
 
       await publicClient.waitForTransactionReceipt({
         hash: addLiquidityTx,
       });
 
-      // 6. Refresh pool state
+      // 5. Refresh pool state
       await onLiquidityAdded();
 
       setDepositA("");
