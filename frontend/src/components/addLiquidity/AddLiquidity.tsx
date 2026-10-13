@@ -94,7 +94,7 @@ function AddLiquidity({ onLiquidityAdded }: AddLiquidityProps) {
         address: CONTRACTS.sepolia.tokenA,
         abi: ERC20_ABI,
         functionName: "approve",
-        args: [CONTRACTS.sepolia.pair, amountA],
+        args: [CONTRACTS.sepolia.router.router, amountA],
       });
 
       await publicClient.waitForTransactionReceipt({
@@ -108,7 +108,7 @@ function AddLiquidity({ onLiquidityAdded }: AddLiquidityProps) {
         address: CONTRACTS.sepolia.tokenB,
         abi: ERC20_ABI,
         functionName: "approve",
-        args: [CONTRACTS.sepolia.pair, amountB],
+        args: [CONTRACTS.sepolia.router.router, amountB],
       });
 
       await publicClient.waitForTransactionReceipt({

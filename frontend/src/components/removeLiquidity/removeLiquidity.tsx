@@ -10,6 +10,7 @@ import {
 
 import { CONTRACTS } from "../../contracts/addresses";
 import AMMPairArtifact from "./../../../../contracts/out/AMMPair.sol/AMMPair.json";
+import RouterArtifact from "../../../../contracts/out/Router.sol/Router.json";
 
 type RemoveLiquidityProps = {
   onRemoveLiquidityRefresh: () => Promise<void>;
@@ -78,29 +79,63 @@ function RemoveLiquidity({ onRemoveLiquidityRefresh }: RemoveLiquidityProps) {
       if (percentage <= 0) {
         throw new Error("Percentage must be greater than 0");
       }
-      if (!userLpBalanceData) {
+
+      if (typeof userLpBalanceData !== "bigint") {
         throw new Error("LP balance not available");
       }
-      if (!publicClient) {
-        throw new Error("Public client not available");
-      }
-      setError("");
-      const liquidityToRemove =
-        ((userLpBalanceData as bigint) * BigInt(percentage)) / 100n;
 
-      const removeLiquidityTx = await writeContractAsync({
+      if (!publicClient || !address) {
+        throw new Error("Wallet or public client not available");
+      }
+
+      setError("");
+
+      const liquidityToRemove = (userLpBalanceData * BigInt(percentage)) / 100n;
+
+      if (liquidityToRemove <= 0n) {
+        throw new Error("Insufficient LP tokens to remove");
+      }
+
+      // Approve the Router to transfer the user's LP tokens.
+      setStatus("Approving LP tokens...");
+
+      const approvalTx = await writeContractAsync({
         address: CONTRACTS.sepolia.pair,
         abi: AMMPairArtifact.abi,
-        functionName: "removeLiquidity",
-        args: [liquidityToRemove],
+        functionName: "approve",
+        args: [CONTRACTS.sepolia.router.router, liquidityToRemove],
       });
 
-      // Wait for the swap transaction
+      await publicClient.waitForTransactionReceipt({
+        hash: approvalTx,
+      });
+
+      // Remove liquidity through the Router.
+      setStatus("Confirm removal in wallet...");
+
+      const deadline = BigInt(Math.floor(Date.now() / 1000) + 1200);
+
+      const removeLiquidityTx = await writeContractAsync({
+        address: CONTRACTS.sepolia.router.router,
+        abi: RouterArtifact.abi,
+        functionName: "removeLiquidity",
+        args: [
+          CONTRACTS.sepolia.tokenA,
+          CONTRACTS.sepolia.tokenB,
+          liquidityToRemove,
+          0n,
+          0n,
+          address,
+          deadline,
+        ],
+      });
+
       setStatus("Confirming transaction...");
 
-      await publicClient?.waitForTransactionReceipt({
+      await publicClient.waitForTransactionReceipt({
         hash: removeLiquidityTx,
       });
+
       setStatus("");
 
       await onRemoveLiquidityRefresh();
@@ -113,7 +148,10 @@ function RemoveLiquidity({ onRemoveLiquidityRefresh }: RemoveLiquidityProps) {
     } catch (err) {
       console.error(err);
 
-      setError("Failed to remove liquidity");
+      setError(
+        err instanceof Error ? err.message : "Failed to remove liquidity",
+      );
+
       setStatus("");
     }
   };
@@ -127,11 +165,15 @@ function RemoveLiquidity({ onRemoveLiquidityRefresh }: RemoveLiquidityProps) {
       typeof userLpBalanceData === "bigint"
         ? formatUnits(userLpBalanceData, 18)
         : 0;
+
     const liquidityToRemove = userLpBalanceDataF * (percentage / 100);
+
     const reserve0DataF: any =
       typeof reserve0Data === "bigint" ? formatUnits(reserve0Data, 18) : 0;
+
     const reserve1DataF: any =
       typeof reserve1Data === "bigint" ? formatUnits(reserve1Data, 18) : 0;
+
     const totalSupplyDataF: any =
       typeof totalSupplyData === "bigint"
         ? formatUnits(totalSupplyData, 18)

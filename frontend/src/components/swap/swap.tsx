@@ -10,7 +10,9 @@ import {
   useReadContract,
   useWriteContract,
 } from "wagmi";
-import AMMPairArtifact from "./../../../../contracts/out/AMMPair.sol/AMMPair.json";
+
+import RouterArtifact from "../../../../contracts/out/Router.sol/Router.json";
+import PairArtifact from "../../../../contracts/out/AMMPair.sol/AMMPair.json";
 
 type SwapProps = {
   onSwapRefresh: () => Promise<void>;
@@ -57,19 +59,20 @@ function Swap({ onSwapRefresh }: SwapProps) {
 
   const { data: reserve0Data, refetch: refetchReserve0 } = useReadContract({
     address: CONTRACTS.sepolia.pair,
-    abi: AMMPairArtifact.abi,
+    abi: PairArtifact.abi,
     functionName: "reserve0",
   });
 
   const { data: reserve1Data, refetch: refetchReserve1 } = useReadContract({
     address: CONTRACTS.sepolia.pair,
-    abi: AMMPairArtifact.abi,
+    abi: PairArtifact.abi,
     functionName: "reserve1",
   });
 
+  // Read the quote from the Pair contract.
   const { data: amountOutData } = useReadContract({
     address: CONTRACTS.sepolia.pair,
-    abi: AMMPairArtifact.abi,
+    abi: PairArtifact.abi,
     functionName: "getAmountOut",
     args: [parseUnits(debouncedPay || "0", 18), !swap],
     query: {
@@ -87,9 +90,11 @@ function Swap({ onSwapRefresh }: SwapProps) {
       setPoolStats({ reserve0: "0", reserve1: "0", rate: "0" });
       return;
     }
+
     const reserve0 = Number(formatUnits(reserve0Data, 18));
     const reserve1 = Number(formatUnits(reserve1Data, 18));
     const rate = swap ? reserve0 / reserve1 : reserve1 / reserve0;
+
     setPoolStats({
       reserve0: reserve0.toString(),
       reserve1: reserve1.toString(),
@@ -101,11 +106,12 @@ function Swap({ onSwapRefresh }: SwapProps) {
     const timer = setTimeout(() => {
       if (pay === "") {
         setReceive("");
+        setDebouncedPay("");
         return;
-      } else {
-        setError("");
-        setDebouncedPay(pay);
       }
+
+      setError("");
+      setDebouncedPay(pay);
     }, 800);
 
     return () => clearTimeout(timer);
@@ -119,7 +125,7 @@ function Swap({ onSwapRefresh }: SwapProps) {
 
     if (payAmount > availableReserve) {
       setReceive("");
-      setIsSwapping(true);
+      setIsSwapping(false);
       setError(
         `Insufficient liquidity. Maximum ${availableReserve} ${
           swap ? "MTKB" : "MTKA"
@@ -129,7 +135,7 @@ function Swap({ onSwapRefresh }: SwapProps) {
     }
 
     setError("");
-    setIsSwapping(false);
+
     if (typeof amountOutData === "bigint") {
       setReceive(formatUnits(amountOutData, 18));
     } else {
@@ -151,7 +157,6 @@ function Swap({ onSwapRefresh }: SwapProps) {
     setError("");
     setStatus("");
 
-    // MODIFIED: Validate wallet connection before sending transactions.
     if (!address) {
       setError("Wallet not connected.");
       return;
@@ -166,15 +171,21 @@ function Swap({ onSwapRefresh }: SwapProps) {
       setError("Enter an amount to swap.");
       return;
     }
+
     try {
       setIsSwapping(true);
+
       const amountIn = parseUnits(pay, 18);
 
       const inputToken = swap
         ? CONTRACTS.sepolia.tokenB
         : CONTRACTS.sepolia.tokenA;
 
-      const swapFunction = swap ? "swapToken1ForToken0" : "swapToken0ForToken1";
+      const outputToken = swap
+        ? CONTRACTS.sepolia.tokenA
+        : CONTRACTS.sepolia.tokenB;
+
+      const deadline = BigInt(Math.floor(Date.now() / 1000) + 20 * 60);
 
       setStatus(`Approving ${swap ? "MTKB" : "MTKA"}...`);
 
@@ -182,7 +193,7 @@ function Swap({ onSwapRefresh }: SwapProps) {
         address: inputToken,
         abi: ERC20_ABI,
         functionName: "approve",
-        args: [CONTRACTS.sepolia.pair, amountIn],
+        args: [CONTRACTS.sepolia.router.router, amountIn],
       });
 
       await publicClient.waitForTransactionReceipt({
@@ -191,26 +202,24 @@ function Swap({ onSwapRefresh }: SwapProps) {
 
       setStatus(`Swapping ${swap ? "MTKB" : "MTKA"}...`);
 
+      // Execute the swap through the Router, not directly through the Pair.
       const swapTx = await writeContractAsync({
-        address: CONTRACTS.sepolia.pair,
-        abi: AMMPairArtifact.abi,
-        functionName: swapFunction,
-        args: [amountIn, 0n],
+        address: CONTRACTS.sepolia.router.router,
+        abi: RouterArtifact.abi,
+        functionName: "swapExactTokensForTokens",
+        args: [amountIn, 0n, inputToken, outputToken, address, deadline],
       });
 
-      // Wait for the swap transaction
       setStatus("Confirming transaction...");
 
       await publicClient.waitForTransactionReceipt({
         hash: swapTx,
       });
 
-      // Refresh pool state
       await onSwapRefresh();
 
       await Promise.all([refetchReserve0(), refetchReserve1()]);
 
-      // Reset form
       setPay("");
       setDebouncedPay("");
       setReceive("");
@@ -237,6 +246,7 @@ function Swap({ onSwapRefresh }: SwapProps) {
           }}
         >
           <div className="swap-label">You pay</div>
+
           <Form.Field className="swap-field" name="swapFrom">
             <Form.Control asChild>
               <div className="swap-input-wrapper">
@@ -264,6 +274,7 @@ function Swap({ onSwapRefresh }: SwapProps) {
           </button>
 
           <div className="swap-label">You receive (estimated)</div>
+
           <Form.Field className="swap-field" name="swapTo">
             <Form.Control asChild>
               <div className="swap-input-wrapper">
@@ -281,6 +292,7 @@ function Swap({ onSwapRefresh }: SwapProps) {
               </div>
             </Form.Control>
           </Form.Field>
+
           <div className="swap-rate">
             <span className="swap-label">Rate</span>
             <div>
@@ -290,16 +302,11 @@ function Swap({ onSwapRefresh }: SwapProps) {
               </span>
             </div>
           </div>
+
           {error && <div className="swap-error">{error}</div>}
+
           <Form.Submit asChild>
-            <button
-              className="swap-button"
-              type="submit"
-              disabled={isSwapping}
-              onSubmit={(event) => {
-                event.preventDefault();
-              }}
-            >
+            <button className="swap-button" type="submit" disabled={isSwapping}>
               {status ? status : "Swap"}
             </button>
           </Form.Submit>
