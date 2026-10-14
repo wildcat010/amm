@@ -10,7 +10,7 @@ import { CONTRACTS } from "./contracts/addresses";
 import { useAccount, useReadContract } from "wagmi";
 import { formatUnits } from "viem";
 
-import AMMPairArtifact from "./../../contracts/out/AMMPair.sol/AMMPair.json";
+import AMMPairArtifact from "./contracts/AMMPair.json";
 
 export const AMMPairAbi = AMMPairArtifact.abi;
 

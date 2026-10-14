@@ -3,8 +3,8 @@ import { Form } from "radix-ui";
 import { useState } from "react";
 import { usePublicClient, useWriteContract, useAccount } from "wagmi";
 import { parseUnits } from "viem";
-import { CONTRACTS } from "../../contracts/addresses";
-import RouterArtifact from "./../../../../contracts/out/Router.sol/Router.json";
+import { CONTRACTS } from "./../../contracts/addresses";
+import RouterArtifact from "./../../contracts/Router.json";
 
 const ERC20_ABI = [
   {

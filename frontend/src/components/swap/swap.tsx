@@ -11,8 +11,8 @@ import {
   useWriteContract,
 } from "wagmi";
 
-import RouterArtifact from "../../../../contracts/out/Router.sol/Router.json";
-import PairArtifact from "../../../../contracts/out/AMMPair.sol/AMMPair.json";
+import RouterArtifact from "./../../contracts/Router.json";
+import PairArtifact from "./../../contracts/AMMPair.json";
 
 type SwapProps = {
   onSwapRefresh: () => Promise<void>;

@@ -8,9 +8,9 @@ import {
   useWriteContract,
 } from "wagmi";
 
-import { CONTRACTS } from "../../contracts/addresses";
-import AMMPairArtifact from "./../../../../contracts/out/AMMPair.sol/AMMPair.json";
-import RouterArtifact from "../../../../contracts/out/Router.sol/Router.json";
+import { CONTRACTS } from "./../../contracts/addresses";
+import AMMPairArtifact from "./../../contracts/AMMPair.json";
+import RouterArtifact from "./../../contracts/Router.json";
 
 type RemoveLiquidityProps = {
   onRemoveLiquidityRefresh: () => Promise<void>;

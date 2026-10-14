@@ -3,9 +3,9 @@ import { useState } from "react";
 import { isAddress } from "viem";
 import { useAccount, usePublicClient, useWriteContract } from "wagmi";
 
-import { CONTRACTS } from "../../contracts/addresses";
-import MyTokenAArtifact from "./../../../../contracts/out/MyTokenA.sol/MyTokenA.json";
-import MyTokenBArtifact from "./../../../../contracts/out/MyTokenB.sol/MyTokenB.json";
+import { CONTRACTS } from "./../../contracts/addresses";
+import MyTokenAArtifact from "./../../contracts/MyTokenA.json";
+import MyTokenBArtifact from "./../../contracts/MyTokenB.json";
 
 function GetTokens() {
   const { address } = useAccount();
